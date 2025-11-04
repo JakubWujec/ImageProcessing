@@ -1,4 +1,5 @@
-# Using UV
+# Installation
+
 ## Make sure python and uv is installed
 https://docs.astral.sh/uv/getting-started/installation/
 
