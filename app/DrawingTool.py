@@ -31,3 +31,12 @@ class LineTool(DrawingTool):
 class PenTool(DrawingTool):
     def draw(self, painter: QPainter, start_point: QPoint, end_point: QPoint):
         painter.drawLine(start_point, end_point)
+
+
+class TextTool(DrawingTool):
+    def __init__(self) -> None:
+        self.textToDraw = ""
+        super().__init__()
+
+    def draw(self, painter: QPainter, start_point: QPoint, end_point: QPoint):
+        painter.drawText(start_point, self.textToDraw)

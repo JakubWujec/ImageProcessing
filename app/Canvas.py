@@ -16,21 +16,20 @@ from PyQt6.QtGui import (
     QFont,
 )
 
-from app.DrawingTool import DrawingTool, LineTool, PenTool, RectangleTool
+from app.DrawingTool import DrawingTool, LineTool, PenTool, RectangleTool, TextTool
 
 
 class Canvas(QFrame):
     def __init__(self) -> None:
         super().__init__()
         self.image = QImage(self.size(), QImage.Format.Format_RGBA8888)
-        self.startPoint = QPoint()
+        self.startPoint = QPoint(50, 50)
         self.endPoint = QPoint()
         self.previousPoint = QPoint()
         self.drawing = False
-        self.currentTool: DrawingTool = RectangleTool()
+        self.__currentTool: DrawingTool = TextTool()
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
-        self.textToDraw = ""
 
     def paintEvent(self, a0: QPaintEvent | None) -> None:
         painter = QPainter(self)
@@ -39,20 +38,21 @@ class Canvas(QFrame):
         pen = QPen(QColor(255, 0, 0), 2)
         painter.setPen(pen)
 
-        if self.textToDraw:
-            self.drawText(painter, self.previousPoint, self.textToDraw)
-
+        # draw preview
+        if isinstance(self.__currentTool, TextTool):
+            self.__currentTool.draw(painter, self.startPoint, self.endPoint)
         elif self.drawing:
-            if not isinstance(self.currentTool, PenTool):
-                self.currentTool.draw(painter, self.startPoint, self.endPoint)
+            if not isinstance(self.__currentTool, PenTool):
+                self.__currentTool.draw(painter, self.startPoint, self.endPoint)
 
     def mousePressEvent(self, a0: QMouseEvent | None) -> None:
         if a0:
             if a0.button() == Qt.MouseButton.LeftButton:
                 self.startPoint = a0.position().toPoint()
-                self.endPoint = a0.position().toPoint()
-                self.drawing = True
+                self.endPoint = self.startPoint
                 self.previousPoint = self.startPoint
+                self.drawing = True
+
             if a0.button() == Qt.MouseButton.RightButton:
                 self.clear(self.image)
         return super().mousePressEvent(a0)
@@ -62,8 +62,8 @@ class Canvas(QFrame):
             self.endPoint = a0.position().toPoint()
             self.update()
 
-            if isinstance(self.currentTool, PenTool):
-                self.currentTool.draw(
+            if isinstance(self.__currentTool, PenTool):
+                self.__currentTool.draw(
                     self.getImagePainter(), self.previousPoint, self.endPoint
                 )
 
@@ -76,39 +76,42 @@ class Canvas(QFrame):
             self.endPoint = a0.position().toPoint()
             self.drawing = False
 
-            if not isinstance(self.currentTool, PenTool):
+            if not isinstance(self.__currentTool, PenTool) and not isinstance(
+                self.__currentTool, TextTool
+            ):
                 self.drawWithCurrentTool()
 
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
-        if a0:
-            if a0.key() in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
-                self.drawText(
-                    self.getImagePainter(), self.previousPoint, self.textToDraw
-                )
-                self.textToDraw = ""
-            elif a0.key() in (Qt.Key.Key_Backspace, Qt.Key.Key_Delete):
-                self.textToDraw = (
-                    self.textToDraw[:-1]
-                    if a0.key() == Qt.Key.Key_Backspace
-                    else self.textToDraw
-                )
-            elif a0.key() >= 32 and a0.key() <= 126:
-                self.textToDraw += a0.text()
+        if isinstance(self.__currentTool, TextTool):
+            if a0:
+                if a0.key() in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
+                    self.drawWithCurrentTool()
+                    self.__currentTool.textToDraw = ""
+                elif a0.key() in (Qt.Key.Key_Backspace, Qt.Key.Key_Delete):
+                    self.__currentTool.textToDraw = (
+                        self.__currentTool.textToDraw[:-1]
+                        if a0.key() == Qt.Key.Key_Backspace
+                        else self.__currentTool.textToDraw
+                    )
+
+                elif a0.key() >= 32 and a0.key() <= 126:
+                    self.__currentTool.textToDraw += a0.text()
 
         return super().keyPressEvent(a0)
-
-    def drawText(self, painter: QPainter, position: QPoint, text: str):
-        painter.setFont(QFont("Arial", 16))
-        painter.drawText(position, text)
 
     def getImagePainter(self):
         return QPainter(self.image)
 
     def drawWithCurrentTool(self):
-        self.currentTool.draw(self.getImagePainter(), self.startPoint, self.endPoint)
+        self.__currentTool.draw(self.getImagePainter(), self.startPoint, self.endPoint)
 
     def clear(self, image):
         image.fill(Qt.GlobalColor.transparent)
+
+    def setTool(self, drawingTool: DrawingTool):
+        self.__currentTool = drawingTool
+        if isinstance(self.__currentTool, TextTool):
+            self.__currentTool.textToDraw = ""
 
     def resizeEvent(self, a0: QResizeEvent | None) -> None:
         self.image = QImage(self.size(), QImage.Format.Format_RGBA8888)
