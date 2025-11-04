@@ -27,13 +27,9 @@ from PyQt6.QtWidgets import (
 from cv2.typing import MatLike
 
 from app import (
+    AppState,
     Camera,
     Canvas,
-    ImageFilter,
-    GaussianBlurFilter,
-    CannyFilter,
-    SharpenFilter,
-    PencilSketchFilter,
 )
 from app.DrawingTool import CircleTool, LineTool, PenTool, RectangleTool, TextTool
 
@@ -41,16 +37,10 @@ from app.DrawingTool import CircleTool, LineTool, PenTool, RectangleTool, TextTo
 class UserInterface(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
+        self.setWindowTitle("App")
 
-        self.imageFilters: Dict[str, ImageFilter] = {
-            "Gaussian Blur": GaussianBlurFilter(),
-            "Canny": CannyFilter(),
-            "Sharpen": SharpenFilter(),
-            "Pencil Sketch": PencilSketchFilter(),
-        }
-
+        self.appState = AppState()
         self.camera = Camera()
-        self.currentColorSpace = cv2.COLOR_BGR2RGB
 
         mainWidget = QFrame(self)
         mainLayout = QVBoxLayout(mainWidget)
@@ -87,9 +77,9 @@ class UserInterface(QMainWindow):
         self.canvasLayer.update()
 
     def processFrame(self, frame) -> MatLike:
-        frame = cv2.cvtColor(frame, self.currentColorSpace)
+        frame = cv2.cvtColor(frame, self.appState.colorSpaceConversion)
 
-        for imageFilter in self.imageFilters.values():
+        for imageFilter in self.appState.imageFilters.values():
             if imageFilter.isOn:
                 frame = imageFilter.apply(frame)
 
@@ -167,28 +157,19 @@ class UserInterface(QMainWindow):
         colorSpaceMenu = menuBar.addMenu("&Color Space")
         action_group = QActionGroup(self)
 
-        colorSpaces = [
-            {
-                "name": "RGB",
-                "action": lambda: setattr(self, "currentColorSpace", cv2.COLOR_BGR2RGB),
-            },
-            {
-                "name": "GRAY",
-                "action": lambda: setattr(
-                    self, "currentColorSpace", cv2.COLOR_BGR2GRAY
-                ),
-            },
-            {
-                "name": "HSV",
-                "action": lambda: setattr(self, "currentColorSpace", cv2.COLOR_BGR2HSV),
-            },
-        ]
+        def makeAction(name):
+            action = QAction(f"&{name}", self)
+            action.setCheckable(True)
+            action.triggered.connect(
+                lambda: self.appState.setColorSpaceConversion(
+                    self.appState.colorSpaceConversions[name]
+                )
+            )
+            return action
 
         if colorSpaceMenu:
-            for cs in colorSpaces:
-                action = QAction(f"&{cs['name']}", self)
-                action.setCheckable(True)
-                action.triggered.connect(cs["action"])
+            for name, cs in self.appState.colorSpaceConversions.items():
+                action = makeAction(name)
                 action_group.addAction(action)
                 colorSpaceMenu.addAction(action)
 
@@ -196,7 +177,7 @@ class UserInterface(QMainWindow):
         imageFilterMenu = menuBar.addMenu("&Filters")
 
         if imageFilterMenu:
-            for name, imageFilter in self.imageFilters.items():
+            for name, imageFilter in self.appState.imageFilters.items():
                 action = QAction(f"&{name}", self)
                 action.setCheckable(True)
                 action.triggered.connect(imageFilter.toggle)
