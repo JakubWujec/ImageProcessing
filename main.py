@@ -2,18 +2,13 @@ import sys
 from typing import Dict
 
 import cv2
-import numpy as np
-from PyQt6.QtCore import QPoint, QSize, Qt, QTimer
+from PyQt6.QtCore import QSize, QTimer
 from PyQt6.QtGui import (
     QAction,
     QActionGroup,
     QCloseEvent,
     QIcon,
     QImage,
-    QMouseEvent,
-    QPainter,
-    QPaintEvent,
-    QPen,
     QPixmap,
 )
 from PyQt6.QtWidgets import (
@@ -23,7 +18,6 @@ from PyQt6.QtWidgets import (
     QFrame,
     QLabel,
     QStackedLayout,
-    QSizePolicy,
     QButtonGroup,
     QToolButton,
     QVBoxLayout,

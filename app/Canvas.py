@@ -1,8 +1,7 @@
-from PyQt6.QtCore import Qt, QPoint, QRect
+from PyQt6.QtCore import Qt, QPoint
 
 from PyQt6.QtWidgets import (
     QFrame,
-    QWidget,
 )
 from PyQt6.QtGui import (
     QImage,
@@ -13,10 +12,9 @@ from PyQt6.QtGui import (
     QResizeEvent,
     QPen,
     QColor,
-    QFont,
 )
 
-from app.DrawingTool import DrawingTool, LineTool, PenTool, RectangleTool, TextTool
+from app.DrawingTool import DrawingTool, PenTool, TextTool
 
 
 class Canvas(QFrame):

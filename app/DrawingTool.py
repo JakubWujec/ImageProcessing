@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from PyQt6.QtCore import Qt, QPoint, QRect
+from PyQt6.QtCore import QPoint, QRect
 from PyQt6.QtGui import (
     QPainter,
 )
