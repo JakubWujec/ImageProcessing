@@ -1,0 +1,11 @@
+[project]
+name = "stekop-task"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "opencv-python>=4.12.0.88",
+    "pyqt6>=6.10.0",
+]
+
