@@ -14,3 +14,6 @@ class Camera:
         if ret:
             return frame
         return None
+
+    def close(self):
+        self.camera.release()

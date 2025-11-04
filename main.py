@@ -69,6 +69,9 @@ class MainWindow(QMainWindow):
             raise ValueError("Unsupported number of channels.")
         return QImage(frame.data, width, height, bytes_per_line, imageFormat)
 
+    def closeEvent(self, a0: QCloseEvent | None) -> None:
+        self.camera.close()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
