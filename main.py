@@ -27,6 +27,7 @@ from PyQt6.QtWidgets import (
     QToolButton,
     QVBoxLayout,
     QHBoxLayout,
+    QMenuBar,
 )
 from cv2.typing import MatLike
 
@@ -39,6 +40,7 @@ class UserInterface(QMainWindow):
         super().__init__()
 
         self.camera = Camera()
+        self.currentColorSpace = cv2.COLOR_BGR2RGB
 
         mainWidget = QFrame(self)
         mainLayout = QVBoxLayout(mainWidget)
@@ -60,6 +62,7 @@ class UserInterface(QMainWindow):
         mainLayout.addWidget(layersWidget)
         mainLayout.addWidget(toolbox)
         self.setCentralWidget(mainWidget)
+        self.buildMenu()
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.run)
@@ -74,6 +77,7 @@ class UserInterface(QMainWindow):
         self.canvasLayer.update()
 
     def processFrame(self, frame) -> MatLike:
+        frame = cv2.cvtColor(frame, self.currentColorSpace)
         return frame
 
     def frame_to_QImage(self, frame: MatLike) -> QImage:
@@ -91,6 +95,11 @@ class UserInterface(QMainWindow):
 
     def closeEvent(self, a0: QCloseEvent | None) -> None:
         self.camera.close()
+
+    def buildMenu(self):
+        menu = self.menuBar()
+        if menu:
+            self.buildColorSpaceMenu(menu)
 
     def buildToolBox(self):
         widget = QWidget()
@@ -137,6 +146,36 @@ class UserInterface(QMainWindow):
         widgetLayout.addWidget(clearButton)
 
         return widget
+
+    def buildColorSpaceMenu(self, menuBar: QMenuBar):
+        colorSpaceMenu = menuBar.addMenu("&Color Space")
+        action_group = QActionGroup(self)
+
+        colorSpaces = [
+            {
+                "name": "RGB",
+                "action": lambda: setattr(self, "currentColorSpace", cv2.COLOR_BGR2RGB),
+            },
+            {
+                "name": "GRAY",
+                "action": lambda: setattr(
+                    self, "currentColorSpace", cv2.COLOR_BGR2GRAY
+                ),
+            },
+            {
+                "name": "HSV",
+                "action": lambda: setattr(self, "currentColorSpace", cv2.COLOR_BGR2HSV),
+            },
+        ]
+
+        if colorSpaceMenu:
+            for cs in colorSpaces:
+                print(cs)
+                action = QAction(f"&{cs['name']}", self)
+                action.setCheckable(True)
+                action.triggered.connect(cs["action"])
+                action_group.addAction(action)
+                colorSpaceMenu.addAction(action)
 
 
 if __name__ == "__main__":
