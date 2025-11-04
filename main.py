@@ -22,23 +22,35 @@ from PyQt6.QtWidgets import (
     QFrame,
     QLabel,
     QStackedLayout,
+    QSizePolicy,
 )
 from cv2.typing import MatLike
 
-from app import Camera
+from app import Camera, Canvas
 
 
-class MainWindow(QMainWindow):
+class UserInterface(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
 
         self.camera = Camera()
 
-        centralWidget = QWidget(self)
+        centralWidget = QFrame(self)
         stacked_layout = QStackedLayout(centralWidget)
         stacked_layout.setStackingMode(QStackedLayout.StackingMode.StackAll)
 
         self.cameraDisplay = QLabel(self)
+        self.cameraDisplay.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
+        self.cameraDisplay.setScaledContents(True)
+
+        self.canvas = Canvas()
+        self.canvas.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
+
+        stacked_layout.addWidget(self.canvas)
         stacked_layout.addWidget(self.cameraDisplay)
 
         self.setCentralWidget(centralWidget)
@@ -52,6 +64,7 @@ class MainWindow(QMainWindow):
         frame = self.processFrame(frame)
         image = self.frame_to_QImage(frame)
         self.cameraDisplay.setPixmap(QPixmap.fromImage(image))
+        self.canvas.update()
 
     def processFrame(self, frame) -> MatLike:
         return frame
@@ -75,6 +88,6 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
+    ui = UserInterface()
+    ui.show()
     sys.exit(app.exec())
