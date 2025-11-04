@@ -1,2 +1,2 @@
 from .AppState import AppState
-from .CameraLayer import CameraLayer
+from .Camera import Camera
