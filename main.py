@@ -1,4 +1,5 @@
 import sys
+from typing import Dict
 
 import cv2
 import numpy as np
@@ -31,13 +32,28 @@ from PyQt6.QtWidgets import (
 )
 from cv2.typing import MatLike
 
-from app import Camera, Canvas
+from app import (
+    Camera,
+    Canvas,
+    ImageFilter,
+    GaussianBlurFilter,
+    CannyFilter,
+    SharpenFilter,
+    PencilSketchFilter,
+)
 from app.DrawingTool import CircleTool, LineTool, PenTool, RectangleTool, TextTool
 
 
 class UserInterface(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
+
+        self.imageFilters: Dict[str, ImageFilter] = {
+            "Gaussian Blur": GaussianBlurFilter(),
+            "Canny": CannyFilter(),
+            "Sharpen": SharpenFilter(),
+            "Pencil Sketch": PencilSketchFilter(),
+        }
 
         self.camera = Camera()
         self.currentColorSpace = cv2.COLOR_BGR2RGB
@@ -78,6 +94,11 @@ class UserInterface(QMainWindow):
 
     def processFrame(self, frame) -> MatLike:
         frame = cv2.cvtColor(frame, self.currentColorSpace)
+
+        for imageFilter in self.imageFilters.values():
+            if imageFilter.isOn:
+                frame = imageFilter.apply(frame)
+
         return frame
 
     def frame_to_QImage(self, frame: MatLike) -> QImage:
@@ -100,6 +121,7 @@ class UserInterface(QMainWindow):
         menu = self.menuBar()
         if menu:
             self.buildColorSpaceMenu(menu)
+            self.buildImageFilterMenu(menu)
 
     def buildToolBox(self):
         widget = QWidget()
@@ -170,12 +192,21 @@ class UserInterface(QMainWindow):
 
         if colorSpaceMenu:
             for cs in colorSpaces:
-                print(cs)
                 action = QAction(f"&{cs['name']}", self)
                 action.setCheckable(True)
                 action.triggered.connect(cs["action"])
                 action_group.addAction(action)
                 colorSpaceMenu.addAction(action)
+
+    def buildImageFilterMenu(self, menuBar: QMenuBar):
+        imageFilterMenu = menuBar.addMenu("&Filters")
+
+        if imageFilterMenu:
+            for name, imageFilter in self.imageFilters.items():
+                action = QAction(f"&{name}", self)
+                action.setCheckable(True)
+                action.triggered.connect(imageFilter.toggle)
+                imageFilterMenu.addAction(action)
 
 
 if __name__ == "__main__":
