@@ -61,9 +61,10 @@ class UserInterface(QMainWindow):
 
     def run(self):
         frame = self.camera.getFrame()
-        frame = self.processFrame(frame)
-        image = self.frame_to_QImage(frame)
-        self.cameraDisplay.setPixmap(QPixmap.fromImage(image))
+        if frame is not None:
+            frame = self.processFrame(frame)
+            image = self.frame_to_QImage(frame)
+            self.cameraDisplay.setPixmap(QPixmap.fromImage(image))
         self.canvas.update()
 
     def processFrame(self, frame) -> MatLike:
