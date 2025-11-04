@@ -15,7 +15,14 @@ from PyQt6.QtGui import (
     QPen,
     QPixmap,
 )
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QFrame, QLabel
+from PyQt6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QFrame,
+    QLabel,
+    QStackedLayout,
+)
 from cv2.typing import MatLike
 
 from app import Camera
@@ -27,8 +34,14 @@ class MainWindow(QMainWindow):
 
         self.camera = Camera()
 
+        centralWidget = QWidget(self)
+        stacked_layout = QStackedLayout(centralWidget)
+        stacked_layout.setStackingMode(QStackedLayout.StackingMode.StackAll)
+
         self.cameraDisplay = QLabel(self)
-        self.setCentralWidget(self.cameraDisplay)
+        stacked_layout.addWidget(self.cameraDisplay)
+
+        self.setCentralWidget(centralWidget)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.run)
