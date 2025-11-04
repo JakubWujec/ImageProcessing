@@ -23,10 +23,15 @@ from PyQt6.QtWidgets import (
     QLabel,
     QStackedLayout,
     QSizePolicy,
+    QButtonGroup,
+    QToolButton,
+    QVBoxLayout,
+    QHBoxLayout,
 )
 from cv2.typing import MatLike
 
 from app import Camera, Canvas
+from app.DrawingTool import CircleTool, LineTool, PenTool, RectangleTool, TextTool
 
 
 class UserInterface(QMainWindow):
@@ -35,25 +40,26 @@ class UserInterface(QMainWindow):
 
         self.camera = Camera()
 
-        centralWidget = QFrame(self)
-        stacked_layout = QStackedLayout(centralWidget)
+        mainWidget = QFrame(self)
+        mainLayout = QVBoxLayout(mainWidget)
+
+        layersWidget = QFrame(self)
+        stacked_layout = QStackedLayout(layersWidget)
         stacked_layout.setStackingMode(QStackedLayout.StackingMode.StackAll)
 
-        self.cameraDisplay = QLabel(self)
-        self.cameraDisplay.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
-        )
-        self.cameraDisplay.setScaledContents(True)
+        self.cameraLayer = QLabel(self)
+        self.cameraLayer.setScaledContents(True)
 
-        self.canvas = Canvas()
-        self.canvas.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
-        )
+        self.canvasLayer = Canvas()
 
-        stacked_layout.addWidget(self.canvas)
-        stacked_layout.addWidget(self.cameraDisplay)
+        stacked_layout.addWidget(self.canvasLayer)
+        stacked_layout.addWidget(self.cameraLayer)
 
-        self.setCentralWidget(centralWidget)
+        toolbox = self.buildToolBox()
+
+        mainLayout.addWidget(layersWidget)
+        mainLayout.addWidget(toolbox)
+        self.setCentralWidget(mainWidget)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.run)
@@ -64,8 +70,8 @@ class UserInterface(QMainWindow):
         if frame is not None:
             frame = self.processFrame(frame)
             image = self.frame_to_QImage(frame)
-            self.cameraDisplay.setPixmap(QPixmap.fromImage(image))
-        self.canvas.update()
+            self.cameraLayer.setPixmap(QPixmap.fromImage(image))
+        self.canvasLayer.update()
 
     def processFrame(self, frame) -> MatLike:
         return frame
@@ -85,6 +91,52 @@ class UserInterface(QMainWindow):
 
     def closeEvent(self, a0: QCloseEvent | None) -> None:
         self.camera.close()
+
+    def buildToolBox(self):
+        widget = QWidget()
+        widgetLayout = QHBoxLayout(widget)
+
+        drawingToolsButtonGroup = QButtonGroup(self)
+
+        tools = [
+            {
+                "icon": "assets/feather/rect.svg",
+                "action": lambda: self.canvasLayer.setTool(RectangleTool()),
+            },
+            {
+                "icon": "assets/feather/circle.svg",
+                "action": lambda: self.canvasLayer.setTool(CircleTool()),
+            },
+            {
+                "icon": "assets/feather/line.svg",
+                "action": lambda: self.canvasLayer.setTool(LineTool()),
+            },
+            {
+                "icon": "assets/feather/pen.svg",
+                "action": lambda: self.canvasLayer.setTool(PenTool()),
+            },
+            {
+                "icon": "assets/feather/type.svg",
+                "action": lambda: self.canvasLayer.setTool(TextTool()),
+            },
+        ]
+
+        for tool in tools:
+            button = QToolButton()
+            button.setIcon(QIcon(tool["icon"]))
+            button.setIconSize(QSize(48, 48))
+            button.setCheckable(True)
+            button.clicked.connect(tool["action"])
+            drawingToolsButtonGroup.addButton(button)
+            widgetLayout.addWidget(button)
+
+        clearButton = QToolButton()
+        clearButton.setIcon(QIcon("assets/feather/clear.svg"))
+        clearButton.setIconSize(QSize(48, 48))
+        clearButton.clicked.connect(lambda: self.canvasLayer.clear())
+        widgetLayout.addWidget(clearButton)
+
+        return widget
 
 
 if __name__ == "__main__":

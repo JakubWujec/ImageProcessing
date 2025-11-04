@@ -27,7 +27,7 @@ class Canvas(QFrame):
         self.endPoint = QPoint()
         self.previousPoint = QPoint()
         self.drawing = False
-        self.__currentTool: DrawingTool = TextTool()
+        self.__currentTool: DrawingTool = PenTool()
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
 
@@ -54,7 +54,7 @@ class Canvas(QFrame):
                 self.drawing = True
 
             if a0.button() == Qt.MouseButton.RightButton:
-                self.clear(self.image)
+                self.clear()
         return super().mousePressEvent(a0)
 
     def mouseMoveEvent(self, a0: QMouseEvent | None) -> None:
@@ -105,8 +105,8 @@ class Canvas(QFrame):
     def drawWithCurrentTool(self):
         self.__currentTool.draw(self.getImagePainter(), self.startPoint, self.endPoint)
 
-    def clear(self, image):
-        image.fill(Qt.GlobalColor.transparent)
+    def clear(self):
+        self.image.fill(Qt.GlobalColor.transparent)
 
     def setTool(self, drawingTool: DrawingTool):
         self.__currentTool = drawingTool
